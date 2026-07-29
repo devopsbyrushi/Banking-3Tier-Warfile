@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - Open New Account | Register</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        body { background: #f5f5f5; color: #333; }
+
+        .demo-banner {
+            background: linear-gradient(90deg, #F37920, #B22222, #F37920);
+            color: white;
+            padding: 6px 0;
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .marquee {
+            display: inline-block;
+            padding-left: 100%;
+            white-space: nowrap;
+            animation: scroll 45s linear infinite;
+        }
+        @keyframes scroll {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        .top-bar {
+            background: #0E2E5C;
+            color: white;
+            padding: 6px 40px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .top-bar a { color: white; text-decoration: none; margin: 0 10px; }
+        .top-bar a:hover { color: #F37920; }
+
+        header {
+            background: white;
+            padding: 14px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #F37920, #B22222);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; font-weight: bold;
+        }
+        .logo-text h1 { color: #B22222; font-size: 24px; font-weight: 700; }
+        .logo-text p { color: #666; font-size: 11px; letter-spacing: 1px; }
+
+        nav ul { display: flex; gap: 28px; list-style: none; }
+        nav a {
+            color: #333; text-decoration: none; font-weight: 600;
+            font-size: 14px; padding: 8px 0;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        nav a:hover { color: #F37920; border-bottom-color: #F37920; }
+
+        /* Page banner */
+        .page-banner {
+            background: linear-gradient(135deg, #B22222 0%, #F37920 100%);
+            color: white;
+            padding: 50px 40px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-banner::before {
+            content: '';
+            position: absolute;
+            top: -50px; right: -50px;
+            width: 250px; height: 250px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .page-banner h2 { font-size: 36px; margin-bottom: 10px; position: relative; z-index: 2; }
+        .page-banner p { font-size: 16px; opacity: 0.95; position: relative; z-index: 2; }
+        .breadcrumb { font-size: 13px; opacity: 0.9; margin-bottom: 12px; position: relative; z-index: 2; }
+        .breadcrumb a { color: white; text-decoration: none; }
+
+        /* Registration form container */
+        .container {
+            max-width: 1100px;
+            margin: -50px auto 60px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 30px;
+            position: relative;
+            z-index: 5;
+        }
+        .form-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .form-card h3 {
+            color: #B22222;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        .form-card .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            color: #333;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #F37920;
+            box-shadow: 0 0 0 3px rgba(243, 121, 32, 0.15);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .terms {
+            background: #fff5ec;
+            border-left: 3px solid #F37920;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #F37920, #B22222);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(178, 34, 34, 0.3);
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: #666;
+        }
+        .login-link a {
+            color: #F37920;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .alert {
+            background: #fee;
+            border-left: 4px solid #B22222;
+            color: #B22222;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        /* Side benefits panel */
+        .benefits-card {
+            background: linear-gradient(135deg, #0E2E5C, #1a4080);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(14, 46, 92, 0.3);
+            height: fit-content;
+        }
+        .benefits-card h3 {
+            font-size: 20px;
+            margin-bottom: 18px;
+            color: #F37920;
+        }
+        .benefit-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+        .benefit-icon {
+            width: 40px; height: 40px;
+            background: rgba(243, 121, 32, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .benefit-text h5 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .benefit-text p {
+            font-size: 12px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        footer {
+            background: #0E2E5C;
+            color: white;
+            padding: 24px 40px;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+        footer strong { color: #F37920; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Demo Marquee -->
+<div class="demo-banner">
+    <div class="marquee">
+        🛠️ &nbsp;&nbsp; Demo project by Rushi — DevOps Multi-Cloud Training &nbsp;&nbsp; ⭐ &nbsp;&nbsp;
+        Spring Boot + MySQL 3-Tier Banking Application &nbsp;&nbsp; 🚀
+    </div>
+</div>
+
+<!-- Top Utility Bar -->
+<div class="top-bar">
+    <div>
+        <a href="#">📍 Branch Locator</a>
+        <a href="#">📞 Customer Care</a>
+    </div>
+    <div>
+        <a href="#">Career</a>
+        <a href="#">About Us</a>
+    </div>
+</div>
+
+<!-- Header -->
+<header>
+    <div class="logo">
+        <div class="logo-icon">🏛</div>
+        <div class="logo-text">
+            <h1>SecureBank</h1>
+            <p>BANKING BY RUSHI</p>
+        </div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="#">Personal</a></li>
+            <li><a href="#">Wealth</a></li>
+            <li><a href="#">NRI</a></li>
+            <li><a href="#">Business</a></li>
+            <li><a href="#">About Us</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Page banner -->
+<div class="page-banner">
+    <div class="breadcrumb">
+        <a th:href="@{/login}">Home</a> &nbsp;›&nbsp; Open New Account
+    </div>
+    <h2>Open Your Bank Account</h2>
+    <p>Join thousands of customers who trust SecureBank — get started in minutes</p>
+</div>
+
+<!-- Form Container -->
+<div class="container">
+
+    <!-- Registration Form -->
+    <div class="form-card">
+        <h3>Create Your Account</h3>
+        <p class="subtitle">Fill in your details below to open a new SecureBank account</p>
+
+        <div th:if="${error}" class="alert">
+            ⚠️ <span th:text="${error}">Error message</span>
+        </div>
+
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label for="username">Choose Customer ID / Username</label>
+                <input type="text" id="username" name="username"
+                       placeholder="e.g. rushi_kumar" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Set Password</label>
+                <input type="password" id="password" name="password"
+                       placeholder="Create a strong password" required>
+            </div>
+
+            <div class="terms">
+                ℹ️ <strong>Note:</strong> Your account will be created with a starting balance of
+                ₹0.00. You can deposit funds after logging in. Password is encrypted using BCrypt.
+            </div>
+
+            <button type="submit" class="btn-submit">Open My Account</button>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a th:href="@{/login}">Login here</a>
+        </div>
+    </div>
+
+    <!-- Benefits Panel -->
+    <div class="benefits-card">
+        <h3>Why SecureBank?</h3>
+
+        <div class="benefit-item">
+            <div class="benefit-icon">🔒</div>
+            <div class="benefit-text">
+                <h5>Bank-Grade Security</h5>
+                <p>BCrypt password hashing &amp; Spring Security protection</p>
+            </div>
+        </div>
+
+        <div class="benefit-item">
+            <div class="benefit-icon">⚡</div>
+            <div class="benefit-text">
+                <h5>Instant Transactions</h5>
+                <p>Real-time deposit, withdraw &amp; transfer between accounts</p>
+            </div>
+        </div>
+
+        <div class="benefit-item">
+            <div class="benefit-icon">📊</div>
+            <div class="benefit-text">
+                <h5>Transaction History</h5>
+                <p>Complete audit trail of all your banking activities</p>
+            </div>
+        </div>
+
+        <div class="benefit-item">
+            <div class="benefit-icon">🌐</div>
+            <div class="benefit-text">
+                <h5>24x7 Access</h5>
+                <p>Access your account anytime, anywhere through net banking</p>
+            </div>
+        </div>
+
+        <div class="benefit-item">
+            <div class="benefit-icon">💰</div>
+            <div class="benefit-text">
+                <h5>Zero Account Charges</h5>
+                <p>No hidden fees, no minimum balance requirements</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    🛠️ <strong>Demo Application by Rushi</strong> · DevOps Multi-Cloud Training · For Educational Use Only<br>
+    © 2026 SecureBank · Spring Boot + MySQL · 3-Tier Architecture
+</footer>
+
+</body>
+</html>

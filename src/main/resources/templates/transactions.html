@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - Transaction History</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        body { background: #f0f2f5; color: #333; }
+
+        .demo-banner {
+            background: linear-gradient(90deg, #F37920, #B22222, #F37920);
+            color: white;
+            padding: 6px 0;
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .marquee {
+            display: inline-block;
+            padding-left: 100%;
+            white-space: nowrap;
+            animation: scroll 45s linear infinite;
+        }
+        @keyframes scroll {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        .top-bar {
+            background: #0E2E5C;
+            color: white;
+            padding: 8px 40px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .session-time {
+            background: rgba(243, 121, 32, 0.2);
+            border: 1px solid #F37920;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #F37920;
+        }
+
+        header {
+            background: white;
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #F37920, #B22222);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 22px; font-weight: bold;
+        }
+        .logo-text h1 { color: #B22222; font-size: 22px; font-weight: 700; }
+        .logo-text p { color: #666; font-size: 10px; letter-spacing: 1px; }
+
+        nav ul { display: flex; gap: 28px; list-style: none; }
+        nav a {
+            color: #333; text-decoration: none; font-weight: 600;
+            font-size: 14px; padding: 8px 0;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #F37920; border-bottom-color: #F37920; }
+
+        .btn-back {
+            background: #B22222;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #F37920; }
+
+        /* Page banner */
+        .page-banner {
+            background: linear-gradient(135deg, #B22222 0%, #F37920 100%);
+            color: white;
+            padding: 36px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-banner::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 350px; height: 350px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .banner-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        .breadcrumb {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .breadcrumb a { color: white; text-decoration: none; }
+        .page-banner h2 {
+            font-size: 30px;
+            margin-bottom: 6px;
+        }
+        .page-banner p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1280px;
+            margin: -20px auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Filters bar */
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-group label {
+            font-size: 11px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .filter-group select, .filter-group input {
+            padding: 8px 12px;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            min-width: 150px;
+        }
+        .btn-filter {
+            background: linear-gradient(135deg, #F37920, #B22222);
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 18px;
+        }
+        .btn-export {
+            background: white;
+            color: #0E2E5C;
+            border: 1.5px solid #0E2E5C;
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 18px;
+            margin-left: auto;
+        }
+
+        /* Stats summary */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 18px 22px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left: 4px solid;
+        }
+        .stat-card.total { border-left-color: #0E2E5C; }
+        .stat-card.deposit { border-left-color: #28a745; }
+        .stat-card.withdraw { border-left-color: #F37920; }
+        .stat-card.transfer { border-left-color: #6f42c1; }
+        .stat-label {
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .stat-value {
+            color: #0E2E5C;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .stat-sub {
+            color: #999;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* Transactions table */
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 22px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .table-header h3 {
+            color: #0E2E5C;
+            font-size: 18px;
+        }
+        .table-header .count {
+            color: #666;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #fafafa;
+        }
+        th {
+            text-align: left;
+            padding: 14px 24px;
+            color: #555;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #eee;
+        }
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+            color: #333;
+        }
+        tr:hover td { background: #fffaf5; }
+        tr:last-child td { border-bottom: none; }
+
+        .txn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-size: 16px;
+            vertical-align: middle;
+        }
+        .txn-icon.in { background: #d4edda; color: #28a745; }
+        .txn-icon.out { background: #ffe5d6; color: #F37920; }
+        .txn-icon.transfer { background: #e6e1f5; color: #6f42c1; }
+
+        .txn-type-text {
+            display: inline-block;
+            vertical-align: middle;
+            font-weight: 600;
+        }
+
+        .txn-id {
+            font-family: 'Consolas', monospace;
+            color: #666;
+            font-size: 12px;
+            background: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .amount {
+            font-weight: 700;
+            font-size: 15px;
+            font-family: 'Consolas', monospace;
+        }
+        .amount.in { color: #28a745; }
+        .amount.out { color: #B22222; }
+
+        .date-cell {
+            color: #555;
+            font-size: 13px;
+        }
+        .date-cell .time {
+            color: #999;
+            font-size: 11px;
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #d4edda;
+            color: #28a745;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty .icon {
+            font-size: 60px;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+
+        footer {
+            background: #0E2E5C;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+        footer strong { color: #F37920; }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            nav { display: none; }
+            th:nth-child(1), td:nth-child(1) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="demo-banner">
+    <div class="marquee">
+        🛠️ &nbsp;&nbsp; Demo project by Rushi — DevOps Multi-Cloud Training &nbsp;&nbsp; ⭐ &nbsp;&nbsp;
+        Spring Boot + MySQL 3-Tier Banking Application &nbsp;&nbsp; 🚀
+    </div>
+</div>
+
+<div class="top-bar">
+    <span>🟢 Securely connected | Net Banking</span>
+    <span>Session timeout: <span class="session-time">14:52 min</span></span>
+</div>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">🏛</div>
+        <div class="logo-text">
+            <h1>SecureBank</h1>
+            <p>NET BANKING</p>
+        </div>
+    </div>
+    <nav>
+        <ul>
+            <li><a th:href="@{/dashboard}">Dashboard</a></li>
+            <li><a href="#">Accounts</a></li>
+            <li><a href="#">Cards</a></li>
+            <li><a th:href="@{/transactions}" class="active">Transactions</a></li>
+            <li><a href="#">Investments</a></li>
+            <li><a href="#">Loans</a></li>
+        </ul>
+    </nav>
+    <a th:href="@{/dashboard}" class="btn-back">← Back to Dashboard</a>
+</header>
+
+<!-- Page banner -->
+<div class="page-banner">
+    <div class="banner-content">
+        <div class="breadcrumb">
+            <a th:href="@{/dashboard}">Dashboard</a> &nbsp;›&nbsp; Transaction History
+        </div>
+        <h2>Transaction History</h2>
+        <p>View, filter and download all your account transactions</p>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Stats Summary -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-label">Total Transactions</div>
+            <div class="stat-value" th:text="${transactions != null} ? ${#lists.size(transactions)} : '0'">0</div>
+            <div class="stat-sub">Lifetime activity</div>
+        </div>
+        <div class="stat-card deposit">
+            <div class="stat-label">Deposits</div>
+            <div class="stat-value" style="color: #28a745;">
+                <span th:text="${transactions != null} ? ${#lists.size(#lists.toList(transactions.?[transactionType == 'DEPOSIT']))} : '0'">0</span>
+            </div>
+            <div class="stat-sub">Money credited</div>
+        </div>
+        <div class="stat-card withdraw">
+            <div class="stat-label">Withdrawals</div>
+            <div class="stat-value" style="color: #F37920;">
+                <span th:text="${transactions != null} ? ${#lists.size(#lists.toList(transactions.?[transactionType == 'WITHDRAWAL']))} : '0'">0</span>
+            </div>
+            <div class="stat-sub">Money debited</div>
+        </div>
+        <div class="stat-card transfer">
+            <div class="stat-label">Transfers</div>
+            <div class="stat-value" style="color: #6f42c1;">
+                <span th:text="${transactions != null} ? ${#lists.size(#lists.toList(transactions.?[#strings.contains(transactionType, 'TRANSFER')]))} : '0'">0</span>
+            </div>
+            <div class="stat-sub">Sent / received</div>
+        </div>
+    </div>
+
+    <!-- Filters bar (visual only - frontend filter UI) -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>Date Range</label>
+            <select>
+                <option>All Time</option>
+                <option>Last 7 days</option>
+                <option>Last 30 days</option>
+                <option>Last 3 months</option>
+                <option>This Year</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Type</label>
+            <select>
+                <option>All Types</option>
+                <option>Deposit</option>
+                <option>Withdrawal</option>
+                <option>Transfer</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Search</label>
+            <input type="text" placeholder="Search transactions...">
+        </div>
+        <button class="btn-filter">Apply Filter</button>
+        <button class="btn-export">📥 Export Statement</button>
+    </div>
+
+    <!-- Transactions table -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Recent Activity</h3>
+            <span class="count">
+                Showing <strong th:text="${transactions != null} ? ${#lists.size(transactions)} : '0'">0</strong> transactions
+            </span>
+        </div>
+
+        <table th:if="${transactions != null and !#lists.isEmpty(transactions)}">
+            <thead>
+                <tr>
+                    <th>Txn ID</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Date &amp; Time</th>
+                    <th style="text-align: right;">Amount (₹)</th>
+                    <th style="text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="transaction : ${transactions}">
+                    <td>
+                        <span class="txn-id">TXN<span th:text="${transaction.id}">0</span></span>
+                    </td>
+                    <td>
+                        <span th:if="${transaction.transactionType == 'DEPOSIT'}">
+                            <span class="txn-icon in">↓</span>
+                            <span class="txn-type-text" style="color: #28a745;">DEPOSIT</span>
+                        </span>
+                        <span th:if="${transaction.transactionType == 'WITHDRAWAL'}">
+                            <span class="txn-icon out">↑</span>
+                            <span class="txn-type-text" style="color: #F37920;">WITHDRAWAL</span>
+                        </span>
+                        <span th:if="${#strings.contains(transaction.transactionType, 'TRANSFER')}">
+                            <span class="txn-icon transfer">↗</span>
+                            <span class="txn-type-text" style="color: #6f42c1;">TRANSFER</span>
+                        </span>
+                    </td>
+                    <td>
+                        <span th:text="${transaction.description != null ? transaction.description : transaction.transactionType}">Transaction</span>
+                    </td>
+                    <td class="date-cell">
+                        <span th:text="${#temporals.format(transaction.transactionDate, 'dd MMM yyyy')}">Date</span>
+                        <span class="time" th:text="${#temporals.format(transaction.transactionDate, 'HH:mm:ss')}">Time</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <span th:if="${transaction.transactionType == 'DEPOSIT'}" class="amount in">
+                            + ₹<span th:text="${#numbers.formatDecimal(transaction.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </span>
+                        <span th:if="${transaction.transactionType != 'DEPOSIT'}" class="amount out">
+                            - ₹<span th:text="${#numbers.formatDecimal(transaction.amount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge">✓ Success</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="empty">
+            <div class="icon">📋</div>
+            <h3 style="color: #666; margin-bottom: 8px;">No transactions yet</h3>
+            <p>Your transaction history will appear here once you make your first deposit or transfer.</p>
+            <a th:href="@{/dashboard}" style="color: #F37920; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 14px;">
+                Go to Dashboard →
+            </a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    🛠️ <strong>Demo Application by Rushi</strong> · DevOps Multi-Cloud Training · For Educational Use Only<br>
+    © 2026 SecureBank · Spring Boot + MySQL · 3-Tier Architecture
+</footer>
+
+</body>
+</html>

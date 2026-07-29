@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureBank - My Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        body { background: #f0f2f5; color: #333; }
+
+        .demo-banner {
+            background: linear-gradient(90deg, #F37920, #B22222, #F37920);
+            color: white;
+            padding: 6px 0;
+            overflow: hidden;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .marquee {
+            display: inline-block;
+            padding-left: 100%;
+            white-space: nowrap;
+            animation: scroll 45s linear infinite;
+        }
+        @keyframes scroll {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        /* Top utility bar */
+        .top-bar {
+            background: #0E2E5C;
+            color: white;
+            padding: 8px 40px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .top-bar .session {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+        .session-time {
+            background: rgba(243, 121, 32, 0.2);
+            border: 1px solid #F37920;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #F37920;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #F37920, #B22222);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 22px; font-weight: bold;
+        }
+        .logo-text h1 { color: #B22222; font-size: 22px; font-weight: 700; }
+        .logo-text p { color: #666; font-size: 10px; letter-spacing: 1px; }
+
+        nav ul { display: flex; gap: 28px; list-style: none; }
+        nav a {
+            color: #333; text-decoration: none; font-weight: 600;
+            font-size: 14px; padding: 8px 0;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #F37920; border-bottom-color: #F37920; }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .user-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #F37920, #B22222);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .user-info { font-size: 13px; }
+        .user-info .greet { color: #666; font-size: 11px; }
+        .user-info .name { color: #333; font-weight: 700; }
+        .btn-logout {
+            background: white;
+            color: #B22222;
+            border: 1.5px solid #B22222;
+            padding: 7px 16px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { background: #B22222; color: white; }
+
+        /* Account Summary Hero */
+        .summary-hero {
+            background: linear-gradient(135deg, #B22222 0%, #F37920 100%);
+            color: white;
+            padding: 36px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .summary-hero::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 350px; height: 350px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .summary-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr;
+            gap: 24px;
+            position: relative;
+            z-index: 2;
+        }
+        .greeting h2 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        .greeting p {
+            opacity: 0.95;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .account-no {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: inline-block;
+            font-family: 'Consolas', monospace;
+            letter-spacing: 1px;
+        }
+
+        .balance-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 22px;
+            border-radius: 10px;
+        }
+        .balance-card .label {
+            font-size: 12px;
+            opacity: 0.85;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .balance-card .currency { font-size: 18px; opacity: 0.85; }
+        .balance-card .sub {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        /* Main content */
+        .container {
+            max-width: 1280px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Quick action cards */
+        .actions-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-top: 4px solid;
+        }
+        .action-card.deposit { border-top-color: #28a745; }
+        .action-card.withdraw { border-top-color: #F37920; }
+        .action-card.transfer { border-top-color: #0E2E5C; }
+        .action-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .action-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+        }
+        .action-icon.deposit { background: linear-gradient(135deg, #28a745, #20c997); }
+        .action-icon.withdraw { background: linear-gradient(135deg, #F37920, #B22222); }
+        .action-icon.transfer { background: linear-gradient(135deg, #0E2E5C, #1a4080); }
+        .action-card h4 {
+            color: #0E2E5C;
+            font-size: 17px;
+        }
+        .action-card .desc {
+            color: #666;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #F37920;
+            box-shadow: 0 0 0 3px rgba(243, 121, 32, 0.15);
+        }
+        .btn-action {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .btn-action.deposit { background: linear-gradient(135deg, #28a745, #20c997); }
+        .btn-action.withdraw { background: linear-gradient(135deg, #F37920, #B22222); }
+        .btn-action.transfer { background: linear-gradient(135deg, #0E2E5C, #1a4080); }
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        /* Quick services strip */
+        .services-strip {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 30px;
+        }
+        .services-strip h3 {
+            color: #0E2E5C;
+            font-size: 18px;
+            margin-bottom: 18px;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+        .service-tile {
+            text-align: center;
+            padding: 16px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+        .service-tile:hover {
+            background: #fff5ec;
+            border-color: #F37920;
+            transform: translateY(-3px);
+        }
+        .service-tile-icon {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .service-tile-name {
+            color: #555;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Lower row: Activity + Offers */
+        .lower-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 26px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .panel-header h3 {
+            color: #0E2E5C;
+            font-size: 17px;
+        }
+        .panel-header a {
+            color: #F37920;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .activity-icon {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .activity-icon.in { background: #d4edda; color: #28a745; }
+        .activity-icon.out { background: #ffe5d6; color: #F37920; }
+        .activity-info h5 { color: #333; font-size: 13px; margin-bottom: 2px; }
+        .activity-info p { color: #999; font-size: 11px; }
+        .activity-amount.in { color: #28a745; font-weight: 700; }
+        .activity-amount.out { color: #B22222; font-weight: 700; }
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+        }
+
+        .offer-item {
+            background: linear-gradient(135deg, #fff5ec, #ffe8d6);
+            border-left: 3px solid #F37920;
+            padding: 14px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .offer-item:hover { transform: translateX(5px); }
+        .offer-item h5 { color: #B22222; font-size: 13px; margin-bottom: 4px; }
+        .offer-item p { color: #666; font-size: 11px; line-height: 1.4; }
+
+        .alert {
+            background: #fee;
+            border-left: 4px solid #B22222;
+            color: #B22222;
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            background: #0E2E5C;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+        footer strong { color: #F37920; }
+
+        @media (max-width: 1024px) {
+            .summary-grid, .actions-row, .lower-row { grid-template-columns: 1fr; }
+            .services-grid { grid-template-columns: repeat(3, 1fr); }
+            nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Demo banner -->
+<div class="demo-banner">
+    <div class="marquee">
+        🛠️ &nbsp;&nbsp; Demo project by Rushi — DevOps Multi-Cloud Training &nbsp;&nbsp; ⭐ &nbsp;&nbsp;
+        Spring Boot + MySQL 3-Tier Banking Application &nbsp;&nbsp; 🚀
+    </div>
+</div>
+
+<!-- Top utility bar -->
+<div class="top-bar">
+    <div class="session">
+        <span>🟢 Last login: Today, 10:24 AM from 192.168.1.1</span>
+    </div>
+    <div class="session">
+        <span>Session timeout in:</span>
+        <span class="session-time">14:52 min</span>
+    </div>
+</div>
+
+<!-- Header -->
+<header>
+    <div class="logo">
+        <div class="logo-icon">🏛</div>
+        <div class="logo-text">
+            <h1>SecureBank</h1>
+            <p>NET BANKING</p>
+        </div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="#" class="active">Dashboard</a></li>
+            <li><a href="#">Accounts</a></li>
+            <li><a href="#">Cards</a></li>
+            <li><a th:href="@{/transactions}">Transactions</a></li>
+            <li><a href="#">Investments</a></li>
+            <li><a href="#">Loans</a></li>
+        </ul>
+    </nav>
+    <div class="user-menu">
+        <div class="user-info">
+            <div class="greet">Welcome,</div>
+            <div class="name" th:text="${customer.username}">User</div>
+        </div>
+        <div class="user-avatar" th:text="${#strings.substring(customer.username, 0, 1)}">U</div>
+        <a th:href="@{/logout}" class="btn-logout">Logout</a>
+    </div>
+</header>
+
+<!-- Account Summary Hero -->
+<section class="summary-hero">
+    <div class="summary-grid">
+        <div class="greeting">
+            <h2>Hello, <span th:text="${customer.username}">User</span> 👋</h2>
+            <p>Welcome back to your SecureBank net banking dashboard</p>
+            <span class="account-no">A/C No: <span th:text="${customer.accountNumber}">SBXXXXXXXXXXX</span> · <span th:text="${customer.accountType}">SAVINGS</span> Account
+            </span>
+        </div>
+        <div class="balance-card">
+            <div class="label">Available Balance</div>
+            <div class="balance-amount">
+                <span class="currency">₹</span>
+                <span th:text="${#numbers.formatDecimal(customer.balance, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+            </div>
+            <div class="sub">As on today</div>
+        </div>
+        <div class="balance-card">
+            <div class="label">Account Type</div>
+            <div class="balance-amount" style="font-size: 22px;" th:text="${customer.accountType}">SAVINGS</div>
+            <div class="sub">Premium Customer</div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+
+    <!-- Action Cards: Deposit / Withdraw / Transfer -->
+    <div class="actions-row">
+
+        <!-- DEPOSIT -->
+        <div class="action-card deposit">
+            <div class="action-header">
+                <div class="action-icon deposit">💵</div>
+                <div>
+                    <h4>Deposit Money</h4>
+                    <div class="desc">Credit funds to your account</div>
+                </div>
+            </div>
+            <form th:action="@{/deposit}" method="post">
+                <div class="form-group">
+                    <input type="number" step="0.01" name="amount"
+                           placeholder="Enter amount (₹)" required>
+                </div>
+                <button type="submit" class="btn-action deposit">Deposit Now</button>
+            </form>
+        </div>
+
+        <!-- WITHDRAW -->
+        <div class="action-card withdraw">
+            <div class="action-header">
+                <div class="action-icon withdraw">💳</div>
+                <div>
+                    <h4>Withdraw Money</h4>
+                    <div class="desc">Debit funds from your account</div>
+                </div>
+            </div>
+            <div th:if="${error}" class="alert">
+                ⚠️ <span th:text="${error}">Insufficient funds</span>
+            </div>
+            <form th:action="@{/withdraw}" method="post">
+                <div class="form-group">
+                    <input type="number" step="0.01" name="amount"
+                           placeholder="Enter amount (₹)" required>
+                </div>
+                <button type="submit" class="btn-action withdraw">Withdraw</button>
+            </form>
+        </div>
+
+        <!-- TRANSFER -->
+        <div class="action-card transfer">
+            <div class="action-header">
+                <div class="action-icon transfer">↗️</div>
+                <div>
+                    <h4>Transfer Funds</h4>
+                    <div class="desc">Send to another SecureBank user</div>
+                </div>
+            </div>
+            <form th:action="@{/transfer}" method="post">
+                <div class="form-group">
+                    <input type="text" name="toUsername"
+                           placeholder="Recipient username" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" step="0.01" name="amount"
+                           placeholder="Amount (₹)" required>
+                </div>
+                <button type="submit" class="btn-action transfer">Transfer</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Quick Services -->
+    <div class="services-strip">
+        <h3>Quick Services</h3>
+        <div class="services-grid">
+            <div class="service-tile">
+                <div class="service-tile-icon">💸</div>
+                <div class="service-tile-name">Pay Bills</div>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">📱</div>
+                <div class="service-tile-name">Recharge</div>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">🏦</div>
+                <div class="service-tile-name">Open FD</div>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">📋</div>
+                <div class="service-tile-name">Statements</div>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">💼</div>
+                <div class="service-tile-name">Investments</div>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">🛡️</div>
+                <div class="service-tile-name">Insurance</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lower row: Recent Activity + Offers -->
+    <div class="lower-row">
+
+        <!-- Recent Activity -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3>Account Activity</h3>
+                <a th:href="@{/transactions}">View All →</a>
+            </div>
+
+            <div class="activity-item">
+                <div class="activity-left">
+                    <div class="activity-icon in">↓</div>
+                    <div class="activity-info">
+                        <h5>Account Opened</h5>
+                        <p>Welcome to SecureBank!</p>
+                    </div>
+                </div>
+                <div class="activity-amount" style="color: #28a745; font-weight: 700;">Active</div>
+            </div>
+
+            <div class="empty-state" style="padding: 20px;">
+                💡 Make your first deposit to see transaction history here<br>
+                <a th:href="@{/transactions}" style="color: #F37920; font-weight: 700; text-decoration: none; font-size: 12px;">
+                    Go to Transaction History →
+                </a>
+            </div>
+        </div>
+
+        <!-- Offers -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3>Offers For You</h3>
+            </div>
+            <div class="offer-item">
+                <h5>🎁 Pre-Approved Loan ₹5L</h5>
+                <p>Get instant personal loan @ 10.50% p.a. with zero processing fee</p>
+            </div>
+            <div class="offer-item">
+                <h5>💎 Upgrade to Premium Card</h5>
+                <p>Lifetime free credit card with 5% cashback on online shopping</p>
+            </div>
+            <div class="offer-item">
+                <h5>📈 Fixed Deposit @ 7.85%</h5>
+                <p>Earn high returns on your savings — book FD in 1 minute</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    🛠️ <strong>Demo Application by Rushi</strong> · DevOps Multi-Cloud Training · For Educational Use Only<br>
+    © 2026 SecureBank · Spring Boot + MySQL · 3-Tier Architecture
+</footer>
+
+</body>
+</html>
