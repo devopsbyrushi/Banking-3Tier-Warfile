@@ -21,7 +21,7 @@
     <!--  Output: target/securebank.jar                               -->
     <!--  Run: java -jar target/securebank.jar                        -->
     <!-- ============================================================ -->
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
 
     <name>SecureBank (JAR)</name>
     <description>Banking Application by Rushi - JAR build with embedded Tomcat</description>
