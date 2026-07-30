@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: securebank
+
+spec:
+  # IMPORTANT: this build keeps all accounts in JVM memory.
+  # Each pod would hold its OWN separate set of customers, so a user who
+  # registers on pod A cannot log in on pod B. Keep this at 1.
+  # Scale out only after moving to a shared database.
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: securebank
+
+  template:
+    metadata:
+      labels:
+        app: securebank
+
+    spec:
+      containers:
+      - name: securebank
+        image: devopsbyrushi/securebank:IMAGE_TAG
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 20
+
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
