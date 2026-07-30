@@ -2,35 +2,53 @@ package com.rushi.securebank;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 /**
  * ================================================================
- *  SecureBank Application Main Class - JAR Edition
- *  Trainer: Rushi | DevOps Multi-Cloud Training
+ * SecureBank Application
+ * Trainer: Rushi | DevOps Multi-Cloud Training
  * ================================================================
  *
- *  This is the standard Spring Boot main class. It uses an
- *  EMBEDDED Tomcat server, so the JAR runs as a standalone app:
+ * WAR Deployment Version
  *
- *      java -jar target/securebank.jar
+ * This application is configured to run in:
  *
- *  No external server needed. App starts on port 8080 (default).
+ * ✔ External Apache Tomcat
+ * ✔ Docker Container
+ * ✔ Kubernetes (GKE)
+ *
  * ================================================================
  */
-@SpringBootApplication
-public class SecureBankApplication {
 
+@SpringBootApplication
+public class SecureBankApplication extends SpringBootServletInitializer {
+
+    /**
+     * Required when deploying as WAR to external Tomcat
+     */
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+        return application.sources(SecureBankApplication.class);
+    }
+
+    /**
+     * Main method (used only when running locally)
+     */
     public static void main(String[] args) {
+
         SpringApplication.run(SecureBankApplication.class, args);
 
         System.out.println();
-        System.out.println("============================================================");
-        System.out.println("   SecureBank (JAR)  -  Banking by Rushi                   ");
-        System.out.println("------------------------------------------------------------");
-        System.out.println("   Standalone Spring Boot application with embedded Tomcat ");
-        System.out.println("   Open in browser: http://localhost:8080                  ");
-        System.out.println("   Press Ctrl + C to stop                                   ");
-        System.out.println("============================================================");
+        System.out.println("======================================================");
+        System.out.println("        SecureBank Application Started");
+        System.out.println("======================================================");
+        System.out.println(" Environment : Docker / Kubernetes");
+        System.out.println(" Server      : Apache Tomcat 10");
+        System.out.println(" Port        : 8080");
+        System.out.println("======================================================");
         System.out.println();
+
     }
 }
