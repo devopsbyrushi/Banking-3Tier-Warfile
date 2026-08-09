@@ -163,8 +163,8 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    sudo docker build \
-                        -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                    docker build \
+                    -t ${IMAGE_NAME}:${BUILD_NUMBER} .
                 '''
             }
         }
@@ -183,7 +183,7 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    sudo docker images | grep ${IMAGE_NAME}
+                    docker images | grep ${IMAGE_NAME}
                 '''
             }
         }
@@ -202,7 +202,7 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    sudo docker rm -f ${CONTAINER_NAME} || true
+                    docker rm -f ${CONTAINER_NAME} || true
                 '''
             }
         }
@@ -221,7 +221,7 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    sudo docker run -d \
+                    docker run -d \
                         --name ${CONTAINER_NAME} \
                         --restart unless-stopped \
                         -p ${HOST_PORT}:${CONTAINER_PORT} \
@@ -246,7 +246,7 @@ pipeline {
                 sh '''
                     sleep 15
 
-                    sudo docker ps \
+                    docker ps \
                         --filter "name=${CONTAINER_NAME}"
                 '''
             }
@@ -289,7 +289,7 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    sudo docker logs \
+                    docker logs \
                         --tail 50 \
                         ${CONTAINER_NAME}
                 '''
