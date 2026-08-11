@@ -140,3 +140,6 @@ Ten JUnit 5 tests cover registration, password hashing, duplicate usernames,
 authentication, deposit, overdraft rejection, invalid amounts, transfers,
 transfer validation and history ordering. JaCoCo writes coverage to
 `target/site/jacoco/`.
+
+
+CI/CD Pipeline Test
