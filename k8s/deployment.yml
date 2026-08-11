@@ -12,19 +12,30 @@ spec:
     matchLabels:
       app: securebank
 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
   template:
+
     metadata:
       labels:
         app: securebank
 
     spec:
       containers:
+
         - name: securebank
+
           image: devopsbyrushi/securebank:IMAGE_TAG
+
           imagePullPolicy: Always
 
           ports:
             - containerPort: 8080
+              protocol: TCP
 
           readinessProbe:
             httpGet:
@@ -48,7 +59,6 @@ spec:
             requests:
               cpu: 200m
               memory: 256Mi
-
             limits:
               cpu: 500m
               memory: 512Mi
