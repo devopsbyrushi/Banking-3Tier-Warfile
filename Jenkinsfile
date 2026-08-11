@@ -4,24 +4,25 @@ pipeline {
 
     environment {
 
-        // =====================================================
+        // ====================================================
         // APPLICATION
-        // =====================================================
+        // ====================================================
 
         APP_NAME = 'securebank'
 
-        // =====================================================
+
+        // ====================================================
         // DOCKER HUB
-        // =====================================================
+        // ====================================================
 
         DOCKER_IMAGE = 'devopsbyrushi/securebank'
 
-        // Jenkins Docker Hub credential ID
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
 
-        // =====================================================
+
+        // ====================================================
         // SONARQUBE
-        // =====================================================
+        // ====================================================
 
         SONARQUBE_SERVER = 'SonarQube'
 
@@ -29,30 +30,29 @@ pipeline {
 
         SONAR_PROJECT_NAME = 'SecureBank'
 
-        // =====================================================
-        // KUBERNETES / GKE
-        // =====================================================
+
+        // ====================================================
+        // KUBERNETES
+        // ====================================================
 
         K8S_NAMESPACE = 'devops-demo'
-
-        K8S_DEPLOYMENT = 'securebank'
-
-        K8S_CONTAINER = 'securebank'
 
         K8S_DEPLOYMENT_FILE = 'k8s/deployment.yml'
 
         K8S_SERVICE_FILE = 'k8s/service.yml'
 
-        // Jenkins user's kubeconfig
-        KUBECONFIG = '/var/lib/jenkins/.kube/config'
+        K8S_DEPLOYMENT = 'securebank'
+
+        K8S_CONTAINER = 'securebank'
     }
 
 
     stages {
 
-        // =====================================================
+
+        // ====================================================
         // 1. CHECKOUT
-        // =====================================================
+        // ====================================================
 
         stage('Checkout') {
 
@@ -62,14 +62,16 @@ pipeline {
                 echo '        CHECKOUT SOURCE CODE'
                 echo '=========================================='
 
+                deleteDir()
+
                 checkout scm
             }
         }
 
 
-        // =====================================================
+        // ====================================================
         // 2. MAVEN BUILD + TEST
-        // =====================================================
+        // ====================================================
 
         stage('Maven Build and Test') {
 
@@ -80,6 +82,8 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
+                    export HOME=/var/lib/jenkins
+
                     mvn clean package
                 '''
             }
@@ -88,16 +92,18 @@ pipeline {
 
                 always {
 
-                    junit allowEmptyResults: true,
-                          testResults: 'target/surefire-reports/*.xml'
+                    junit(
+                        allowEmptyResults: true,
+                        testResults: 'target/surefire-reports/*.xml'
+                    )
                 }
             }
         }
 
 
-        // =====================================================
+        // ====================================================
         // 3. VERIFY WAR
-        // =====================================================
+        // ====================================================
 
         stage('Verify WAR') {
 
@@ -116,9 +122,9 @@ pipeline {
         }
 
 
-        // =====================================================
+        // ====================================================
         // 4. SONARQUBE ANALYSIS
-        // =====================================================
+        // ====================================================
 
         stage('SonarQube Analysis') {
 
@@ -131,6 +137,8 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
 
                     sh '''
+                        export HOME=/var/lib/jenkins
+
                         mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
                         -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                         -Dsonar.projectName=${SONAR_PROJECT_NAME}
@@ -140,9 +148,9 @@ pipeline {
         }
 
 
-        // =====================================================
+        // ====================================================
         // 5. SONARQUBE QUALITY GATE
-        // =====================================================
+        // ====================================================
 
         stage('SonarQube Quality Gate') {
 
@@ -152,17 +160,22 @@ pipeline {
                 echo '       SONARQUBE QUALITY GATE'
                 echo '=========================================='
 
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(
+                    time: 5,
+                    unit: 'MINUTES'
+                ) {
 
-                    waitForQualityGate abortPipeline: true
+                    waitForQualityGate(
+                        abortPipeline: true
+                    )
                 }
             }
         }
 
 
-        // =====================================================
+        // ====================================================
         // 6. DOCKER BUILD
-        // =====================================================
+        // ====================================================
 
         stage('Docker Build') {
 
@@ -181,9 +194,9 @@ pipeline {
         }
 
 
-        // =====================================================
+        // ====================================================
         // 7. DOCKER IMAGE VERIFY
-        // =====================================================
+        // ====================================================
 
         stage('Docker Image Verify') {
 
@@ -194,15 +207,15 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    docker images | grep ${DOCKER_IMAGE}
+                    docker images ${DOCKER_IMAGE}
                 '''
             }
         }
 
 
-        // =====================================================
+        // ====================================================
         // 8. DOCKER HUB LOGIN
-        // =====================================================
+        // ====================================================
 
         stage('Docker Hub Login') {
 
@@ -222,7 +235,7 @@ pipeline {
 
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login \
-                        -u "$DOCKER_USERNAME" \
+                        --username "$DOCKER_USERNAME" \
                         --password-stdin
                     '''
                 }
@@ -230,9 +243,9 @@ pipeline {
         }
 
 
-        // =====================================================
+        // ====================================================
         // 9. PUSH IMAGE TO DOCKER HUB
-        // =====================================================
+        // ====================================================
 
         stage('Docker Push') {
 
@@ -251,9 +264,67 @@ pipeline {
         }
 
 
-        // =====================================================
-        // 10. KUBERNETES DEPLOYMENT
-        // =====================================================
+        // ====================================================
+        // 10. KUBERNETES PRE-CHECK
+        // ====================================================
+
+        stage('Kubernetes Pre-Check') {
+
+            steps {
+
+                echo '=========================================='
+                echo '       KUBERNETES CONNECTION CHECK'
+                echo '=========================================='
+
+                sh '''
+                    kubectl cluster-info
+
+                    kubectl get nodes
+
+                    kubectl get namespace ${K8S_NAMESPACE}
+
+                    kubectl auth can-i create deployments \
+                    -n ${K8S_NAMESPACE}
+
+                    kubectl auth can-i create services \
+                    -n ${K8S_NAMESPACE}
+                '''
+            }
+        }
+
+
+        // ====================================================
+        // 11. UPDATE IMAGE TAG
+        // ====================================================
+
+        stage('Update Kubernetes Image') {
+
+            steps {
+
+                echo '=========================================='
+                echo '       UPDATE KUBERNETES IMAGE TAG'
+                echo '=========================================='
+
+                sh '''
+                    echo "Before update:"
+
+                    grep "image:" ${K8S_DEPLOYMENT_FILE}
+
+                    sed -i \
+                    "s|IMAGE_TAG|${BUILD_NUMBER}|g" \
+                    ${K8S_DEPLOYMENT_FILE}
+
+                    echo "After update:"
+
+                    grep "image:" ${K8S_DEPLOYMENT_FILE}
+                '''
+            }
+        }
+
+
+        // ====================================================
+        // 12. DEPLOY TO KUBERNETES
+        // ====================================================
 
         stage('Deploy to Kubernetes') {
 
@@ -264,21 +335,13 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    echo "Checking Kubernetes connection..."
-
-                    kubectl cluster-info
-
-                    echo "Checking namespace..."
-
-                    kubectl get namespace ${K8S_NAMESPACE}
-
-                    echo "Applying Kubernetes Deployment..."
+                    echo "Applying Deployment..."
 
                     kubectl apply \
                     -f ${K8S_DEPLOYMENT_FILE} \
                     -n ${K8S_NAMESPACE}
 
-                    echo "Applying Kubernetes Service..."
+                    echo "Applying Service..."
 
                     kubectl apply \
                     -f ${K8S_SERVICE_FILE} \
@@ -288,42 +351,20 @@ pipeline {
         }
 
 
-        // =====================================================
-        // 11. UPDATE IMAGE
-        // =====================================================
-
-        stage('Update Kubernetes Image') {
-
-            steps {
-
-                echo '=========================================='
-                echo '       UPDATE KUBERNETES IMAGE'
-                echo '=========================================='
-
-                sh '''
-                    kubectl set image deployment/${K8S_DEPLOYMENT} \
-                    ${K8S_CONTAINER}=${DOCKER_IMAGE}:${BUILD_NUMBER} \
-                    -n ${K8S_NAMESPACE}
-                '''
-            }
-        }
-
-
-        // =====================================================
-        // 12. ROLLOUT STATUS
-        // =====================================================
+        // ====================================================
+        // 13. KUBERNETES ROLLOUT
+        // ====================================================
 
         stage('Kubernetes Rollout') {
 
             steps {
 
                 echo '=========================================='
-                echo '        KUBERNETES ROLLOUT STATUS'
+                echo '        WAIT FOR KUBERNETES ROLLOUT'
                 echo '=========================================='
 
                 sh '''
-                    kubectl rollout status \
-                    deployment/${K8S_DEPLOYMENT} \
+                    kubectl rollout status deployment/${K8S_DEPLOYMENT} \
                     -n ${K8S_NAMESPACE} \
                     --timeout=5m
                 '''
@@ -331,37 +372,35 @@ pipeline {
         }
 
 
-        // =====================================================
-        // 13. KUBERNETES HEALTH CHECK
-        // =====================================================
+        // ====================================================
+        // 14. VERIFY PODS
+        // ====================================================
 
-        stage('Kubernetes Health Check') {
+        stage('Verify Kubernetes Pods') {
 
             steps {
 
                 echo '=========================================='
-                echo '       KUBERNETES HEALTH CHECK'
+                echo '        VERIFY KUBERNETES PODS'
                 echo '=========================================='
 
                 sh '''
-                    echo "=========================================="
-                    echo "DEPLOYMENTS"
-                    echo "=========================================="
+                    echo "Deployments:"
 
                     kubectl get deployments \
                     -n ${K8S_NAMESPACE}
 
-                    echo "=========================================="
-                    echo "PODS"
-                    echo "=========================================="
+                    echo ""
+
+                    echo "Pods:"
 
                     kubectl get pods \
                     -n ${K8S_NAMESPACE} \
                     -o wide
 
-                    echo "=========================================="
-                    echo "SERVICES"
-                    echo "=========================================="
+                    echo ""
+
+                    echo "Services:"
 
                     kubectl get services \
                     -n ${K8S_NAMESPACE}
@@ -371,50 +410,50 @@ pipeline {
     }
 
 
-    // =========================================================
+    // ========================================================
     // POST ACTIONS
-    // =========================================================
+    // ========================================================
 
     post {
 
         success {
 
-            echo '''
-            ==================================================
-                 SECUREBANK CI/CD SUCCESSFUL
-            ==================================================
+            echo """
+==================================================
+       SECUREBANK CI/CD SUCCESSFUL
+==================================================
 
-            GitHub       : CHECKOUT SUCCESS
-            Maven        : BUILD + TEST SUCCESS
-            SonarQube    : QUALITY GATE PASSED
-            Docker       : IMAGE BUILD SUCCESS
-            Docker Hub   : IMAGE PUSH SUCCESS
-            Kubernetes   : DEPLOYMENT SUCCESS
-            GKE          : ROLLOUT SUCCESS
+GitHub       : CHECKOUT SUCCESS
+Maven        : BUILD + TEST SUCCESS
+SonarQube    : QUALITY GATE PASSED
+Docker       : IMAGE BUILD SUCCESS
+Docker Hub   : IMAGE PUSH SUCCESS
+Kubernetes   : DEPLOYMENT SUCCESS
 
-            Docker Image:
-            ${DOCKER_IMAGE}:${BUILD_NUMBER}
+Docker Image:
+${DOCKER_IMAGE}:${BUILD_NUMBER}
 
-            Namespace:
-            ${K8S_NAMESPACE}
+Kubernetes:
+Namespace    : ${K8S_NAMESPACE}
+Deployment   : ${K8S_DEPLOYMENT}
 
-            ==================================================
-            '''
+==================================================
+"""
         }
 
 
         failure {
 
-            echo '''
-            ==================================================
-                 SECUREBANK CI/CD FAILED
-            ==================================================
+            echo """
+==================================================
+        SECUREBANK CI/CD FAILED
+==================================================
 
-            Check the failed Jenkins stage
-            and Jenkins Console Output.
+Check the failed Jenkins stage
+and Jenkins console output.
 
-            ==================================================
-            '''
+==================================================
+"""
         }
 
 
