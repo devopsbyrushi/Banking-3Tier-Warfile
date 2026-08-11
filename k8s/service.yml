@@ -3,7 +3,6 @@ kind: Service
 
 metadata:
   name: securebank
-  namespace: devops-demo
 
 spec:
   selector:
