@@ -7,11 +7,9 @@ metadata:
 spec:
   replicas: 2
 
+  # Do not use RollingUpdate
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 0
+    type: Recreate
 
   selector:
     matchLabels:
