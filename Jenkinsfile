@@ -463,9 +463,7 @@ and Jenkins console output.
             echo '       PIPELINE EXECUTION COMPLETED'
             echo '=========================================='
 
-            sh '''
-                docker logout || true
-            '''
+            sh 'docker logout || true'
         }
     }
 }
