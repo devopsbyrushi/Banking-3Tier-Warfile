@@ -10,23 +10,20 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 1
+      maxSurge: 0
 
   selector:
     matchLabels:
       app: securebank
 
   template:
-
     metadata:
       labels:
         app: securebank
 
     spec:
-
       containers:
-
         - name: securebank
 
           image: devopsbyrushi/securebank:IMAGE_TAG
@@ -55,7 +52,6 @@ spec:
             failureThreshold: 3
 
           resources:
-
             requests:
               cpu: 100m
               memory: 128Mi
