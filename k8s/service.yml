@@ -3,6 +3,7 @@ kind: Service
 
 metadata:
   name: securebank-service
+  namespace: devops-demo
 
 spec:
   selector:
@@ -11,6 +12,6 @@ spec:
   type: LoadBalancer
 
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
