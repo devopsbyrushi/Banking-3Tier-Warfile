@@ -4,26 +4,39 @@ pipeline {
 
     environment {
 
-        // Application
+        // ========================================================
+        // APPLICATION
+        // ========================================================
+
         APP_NAME = 'securebank'
-        CONTAINER_NAME = 'securebank'
 
-        // Docker
-        IMAGE_NAME = 'securebank'
+        // ========================================================
+        // DOCKER
+        // Replace with your actual Docker Hub username
+        // ========================================================
 
-        // Application port
-        HOST_PORT = '8081'
-        CONTAINER_PORT = '8080'
+        DOCKER_IMAGE = 'devopsbyrushi/securebank'
 
-        // SonarQube server name configured in Jenkins
+        // Jenkins credential ID for Docker Hub
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'
+
+        // ========================================================
+        // SONARQUBE
+        // Must match the SonarQube server name configured in Jenkins
+        // ========================================================
+
         SONARQUBE_SERVER = 'SonarQube'
+
+        SONAR_PROJECT_KEY = 'securebank'
+        SONAR_PROJECT_NAME = 'SecureBank'
     }
+
 
     stages {
 
-        // ============================================================
+        // ========================================================
         // 1. CHECKOUT
-        // ============================================================
+        // ========================================================
 
         stage('Checkout') {
 
@@ -38,39 +51,20 @@ pipeline {
         }
 
 
-        // ============================================================
-        // 2. MAVEN BUILD
-        // ============================================================
+        // ========================================================
+        // 2. MAVEN BUILD + TEST
+        // ========================================================
 
-        stage('Maven Build') {
+        stage('Maven Build and Test') {
 
             steps {
 
                 echo '=========================================='
-                echo '             MAVEN BUILD'
+                echo '       MAVEN BUILD AND UNIT TEST'
                 echo '=========================================='
 
                 sh '''
                     mvn clean package
-                '''
-            }
-        }
-
-
-        // ============================================================
-        // 3. UNIT TEST
-        // ============================================================
-
-        stage('Unit Test') {
-
-            steps {
-
-                echo '=========================================='
-                echo '              UNIT TEST'
-                echo '=========================================='
-
-                sh '''
-                    mvn test
                 '''
             }
 
@@ -85,9 +79,9 @@ pipeline {
         }
 
 
-        // ============================================================
-        // 4. VERIFY WAR FILE
-        // ============================================================
+        // ========================================================
+        // 3. VERIFY WAR
+        // ========================================================
 
         stage('Verify WAR') {
 
@@ -106,9 +100,9 @@ pipeline {
         }
 
 
-        // ============================================================
-        // 5. SONARQUBE ANALYSIS
-        // ============================================================
+        // ========================================================
+        // 4. SONARQUBE ANALYSIS
+        // ========================================================
 
         stage('SonarQube Analysis') {
 
@@ -121,18 +115,18 @@ pipeline {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
 
                     sh '''
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=securebank \
-                        -Dsonar.projectName=SecureBank
+                        mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                        -Dsonar.projectName=${SONAR_PROJECT_NAME}
                     '''
                 }
             }
         }
 
 
-        // ============================================================
-        // 6. QUALITY GATE
-        // ============================================================
+        // ========================================================
+        // 5. SONARQUBE QUALITY GATE
+        // ========================================================
 
         stage('SonarQube Quality Gate') {
 
@@ -150,9 +144,9 @@ pipeline {
         }
 
 
-        // ============================================================
-        // 7. DOCKER BUILD
-        // ============================================================
+        // ========================================================
+        // 6. DOCKER BUILD
+        // ========================================================
 
         stage('Docker Build') {
 
@@ -164,15 +158,16 @@ pipeline {
 
                 sh '''
                     docker build \
-                    -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                    -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
+                    -t ${DOCKER_IMAGE}:latest .
                 '''
             }
         }
 
 
-        // ============================================================
-        // 8. DOCKER IMAGE VERIFY
-        // ============================================================
+        // ========================================================
+        // 7. DOCKER IMAGE VERIFY
+        // ========================================================
 
         stage('Docker Image Verify') {
 
@@ -183,124 +178,66 @@ pipeline {
                 echo '=========================================='
 
                 sh '''
-                    docker images | grep ${IMAGE_NAME}
+                    docker images | grep ${DOCKER_IMAGE}
                 '''
             }
         }
 
 
-        // ============================================================
-        // 9. STOP OLD CONTAINER
-        // ============================================================
+        // ========================================================
+        // 8. DOCKER HUB LOGIN
+        // ========================================================
 
-        stage('Stop Old Container') {
+        stage('Docker Hub Login') {
 
             steps {
 
                 echo '=========================================='
-                echo '         STOP OLD CONTAINER'
+                echo '          DOCKER HUB LOGIN'
                 echo '=========================================='
 
-                sh '''
-                    docker rm -f ${CONTAINER_NAME} || true
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKER_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login \
+                        -u "$DOCKER_USERNAME" \
+                        --password-stdin
+                    '''
+                }
             }
         }
 
 
-        // ============================================================
-        // 10. DEPLOY APPLICATION
-        // ============================================================
+        // ========================================================
+        // 9. PUSH TO DOCKER HUB
+        // ========================================================
 
-        stage('Deploy Application') {
-
-            steps {
-
-                echo '=========================================='
-                echo '        DEPLOY SECUREBANK'
-                echo '=========================================='
-
-                sh '''
-                    docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        --restart unless-stopped \
-                        -p ${HOST_PORT}:${CONTAINER_PORT} \
-                        ${IMAGE_NAME}:${BUILD_NUMBER}
-                '''
-            }
-        }
-
-
-        // ============================================================
-        // 11. APPLICATION STATUS
-        // ============================================================
-
-        stage('Application Status') {
+        stage('Docker Push') {
 
             steps {
 
                 echo '=========================================='
-                echo '       APPLICATION STATUS'
+                echo '          PUSH TO DOCKER HUB'
                 echo '=========================================='
 
                 sh '''
-                    sleep 15
-
-                    docker ps \
-                        --filter "name=${CONTAINER_NAME}"
-                '''
-            }
-        }
-
-
-        // ============================================================
-        // 12. APPLICATION HEALTH CHECK
-        // ============================================================
-
-        stage('Health Check') {
-
-            steps {
-
-                echo '=========================================='
-                echo '         APPLICATION HEALTH CHECK'
-                echo '=========================================='
-
-                sh '''
-                    sleep 5
-
-                    curl -f \
-                        --max-time 30 \
-                        http://localhost:${HOST_PORT}/health
-                '''
-            }
-        }
-
-
-        // ============================================================
-        // 13. DOCKER LOGS
-        // ============================================================
-
-        stage('Application Logs') {
-
-            steps {
-
-                echo '=========================================='
-                echo '          APPLICATION LOGS'
-                echo '=========================================='
-
-                sh '''
-                    docker logs \
-                        --tail 50 \
-                        ${CONTAINER_NAME}
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker push ${DOCKER_IMAGE}:latest
                 '''
             }
         }
     }
 
 
-    // ================================================================
+    // ============================================================
     // POST ACTIONS
-    // ================================================================
+    // ============================================================
 
     post {
 
@@ -311,15 +248,14 @@ pipeline {
                   SECUREBANK CI/CD SUCCESSFUL
             ==================================================
 
-            GitHub       : Banking-3Tier-Warfile
-            Application  : SecureBank
-            SonarQube    : PASSED
-            Docker       : SUCCESS
-            Deployment   : SUCCESS
-            Health Check : PASSED
+            GitHub       : CHECKOUT SUCCESS
+            Maven        : BUILD + TEST SUCCESS
+            SonarQube    : QUALITY GATE PASSED
+            Docker       : IMAGE BUILD SUCCESS
+            Docker Hub   : IMAGE PUSH SUCCESS
 
-            Application:
-            http://<JENKINS-EXTERNAL-IP>:8081
+            Docker Image:
+            ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
             ==================================================
             '''
@@ -333,7 +269,7 @@ pipeline {
                   SECUREBANK CI/CD FAILED
             ==================================================
 
-            Please check the failed Jenkins stage.
+            Check the failed Jenkins stage and console output.
 
             ==================================================
             '''
@@ -345,6 +281,10 @@ pipeline {
             echo '=========================================='
             echo '       PIPELINE EXECUTION COMPLETED'
             echo '=========================================='
+
+            sh '''
+                docker logout || true
+            '''
         }
     }
 }
