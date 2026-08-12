@@ -5,7 +5,7 @@ metadata:
   name: securebank
 
 spec:
-  replicas: 2
+  replicas: 1
 
   # Do not use RollingUpdate
   strategy:
