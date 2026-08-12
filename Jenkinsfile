@@ -218,84 +218,84 @@ pipeline {
         }
 
 
-        // ========================================================
-        // 9. KUBERNETES DEPLOY
-        // ========================================================
+    //     // ========================================================
+    //     // 9. KUBERNETES DEPLOY
+    //     // ========================================================
 
-        stage('Kubernetes Deploy') {
+    //     stage('Kubernetes Deploy') {
 
-            steps {
+    //         steps {
 
-                echo '=========================================='
-                echo '       DEPLOY TO KUBERNETES'
-                echo '=========================================='
+    //             echo '=========================================='
+    //             echo '       DEPLOY TO KUBERNETES'
+    //             echo '=========================================='
 
-                sh '''
-                    echo "Using Docker Image:"
-                    echo "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+    //             sh '''
+    //                 echo "Using Docker Image:"
+    //                 echo "${DOCKER_IMAGE}:${BUILD_NUMBER}"
 
-                    echo "Updating Kubernetes image tag..."
+    //                 echo "Updating Kubernetes image tag..."
 
-                    sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yml
+    //                 sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yml
 
-                    echo "Applying Deployment..."
+    //                 echo "Applying Deployment..."
 
-                    kubectl apply \
-                    -f k8s/deployment.yml \
-                    -n ${K8S_NAMESPACE}
+    //                 kubectl apply \
+    //                 -f k8s/deployment.yml \
+    //                 -n ${K8S_NAMESPACE}
 
-                    echo "Applying Service..."
+    //                 echo "Applying Service..."
 
-                    kubectl apply \
-                    -f k8s/service.yml \
-                    -n ${K8S_NAMESPACE}
-                '''
-            }
-        }
+    //                 kubectl apply \
+    //                 -f k8s/service.yml \
+    //                 -n ${K8S_NAMESPACE}
+    //             '''
+    //         }
+    //     }
 
 
-        // ========================================================
-        // 10. VERIFY KUBERNETES
-        // ========================================================
+    //     // ========================================================
+    //     // 10. VERIFY KUBERNETES
+    //     // ========================================================
 
-        stage('Verify Kubernetes') {
+    //     stage('Verify Kubernetes') {
 
-            steps {
+    //         steps {
 
-                echo '=========================================='
-                echo '       VERIFY KUBERNETES PODS'
-                echo '=========================================='
+    //             echo '=========================================='
+    //             echo '       VERIFY KUBERNETES PODS'
+    //             echo '=========================================='
 
-                sh '''
-                    echo "Waiting for SecureBank pods..."
+    //             sh '''
+    //                 echo "Waiting for SecureBank pods..."
 
-                    kubectl wait \
-                    --for=condition=Ready \
-                    pod \
-                    -l app=securebank \
-                    -n ${K8S_NAMESPACE} \
-                    --timeout=5m
+    //                 kubectl wait \
+    //                 --for=condition=Ready \
+    //                 pod \
+    //                 -l app=securebank \
+    //                 -n ${K8S_NAMESPACE} \
+    //                 --timeout=5m
 
-                    echo "=========================================="
-                    echo "       KUBERNETES PODS"
-                    echo "=========================================="
+    //                 echo "=========================================="
+    //                 echo "       KUBERNETES PODS"
+    //                 echo "=========================================="
 
-                    kubectl get pods \
-                    -n ${K8S_NAMESPACE} \
-                    -l app=securebank \
-                    -o wide
+    //                 kubectl get pods \
+    //                 -n ${K8S_NAMESPACE} \
+    //                 -l app=securebank \
+    //                 -o wide
 
-                    echo "=========================================="
-                    echo "       KUBERNETES SERVICE"
-                    echo "=========================================="
+    //                 echo "=========================================="
+    //                 echo "       KUBERNETES SERVICE"
+    //                 echo "=========================================="
 
-                    kubectl get svc \
-                    ${K8S_DEPLOYMENT} \
-                    -n ${K8S_NAMESPACE}
-                '''
-            }
-        }
-    }
+    //                 kubectl get svc \
+    //                 ${K8S_DEPLOYMENT} \
+    //                 -n ${K8S_NAMESPACE}
+    //             '''
+    //         }
+    //     }
+    // }
 
 
     // ============================================================
