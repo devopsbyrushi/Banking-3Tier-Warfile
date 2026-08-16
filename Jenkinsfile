@@ -219,83 +219,83 @@ pipeline {
         }
 
 
-        // ========================================================
-        // 9. KUBERNETES DEPLOY
-        // ========================================================
+        // // ========================================================
+        // // 9. KUBERNETES DEPLOY
+        // // ========================================================
 
-        stage('Kubernetes Deploy') {
+        // stage('Kubernetes Deploy') {
 
-            steps {
+        //     steps {
 
-                echo '=========================================='
-                echo '       DEPLOY TO KUBERNETES'
-                echo '=========================================='
+        //         echo '=========================================='
+        //         echo '       DEPLOY TO KUBERNETES'
+        //         echo '=========================================='
 
-                sh '''
-                    echo "Using Docker Image:"
-                    echo "${DOCKER_IMAGE}:${BUILD_NUMBER}"
+        //         sh '''
+        //             echo "Using Docker Image:"
+        //             echo "${DOCKER_IMAGE}:${BUILD_NUMBER}"
 
-                    echo "Updating Kubernetes image tag..."
+        //             echo "Updating Kubernetes image tag..."
 
-                    sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yaml
+        //             sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yaml
 
-                    echo "Applying Deployment..."
+        //             echo "Applying Deployment..."
 
-                    sudo -u ansible -H kubectl apply \
-                    -f k8s/deployment.yaml \
-                    -n ${K8S_NAMESPACE}
+        //             sudo -u ansible -H kubectl apply \
+        //             -f k8s/deployment.yaml \
+        //             -n ${K8S_NAMESPACE}
 
-                    echo "Applying Service..."
+        //             echo "Applying Service..."
 
-                    sudo -u ansible -H kubectl apply \
-                    -f k8s/service.yaml \
-                    -n ${K8S_NAMESPACE}
-                '''
-            }
-        }
+        //             sudo -u ansible -H kubectl apply \
+        //             -f k8s/service.yaml \
+        //             -n ${K8S_NAMESPACE}
+        //         '''
+        //     }
+        // }
 
 
-        // ========================================================
-        // 10. VERIFY KUBERNETES
-        // ========================================================
+        // // ========================================================
+        // // 10. VERIFY KUBERNETES
+        // // ========================================================
 
-        stage('Verify Kubernetes') {
+        // stage('Verify Kubernetes') {
 
-            steps {
+        //     steps {
 
-                echo '=========================================='
-                echo '       VERIFY KUBERNETES PODS'
-                echo '=========================================='
+        //         echo '=========================================='
+        //         echo '       VERIFY KUBERNETES PODS'
+        //         echo '=========================================='
 
-                sh '''
-                    echo "Waiting for SecureBank pods..."
+        //         sh '''
+        //             echo "Waiting for SecureBank pods..."
 
-                    sudo -u ansible -H kubectl wait \
-                    --for=condition=Ready \
-                    pod \
-                    -l app=securebank \
-                    -n ${K8S_NAMESPACE} \
-                    --timeout=5m
+        //             sudo -u ansible -H kubectl wait \
+        //             --for=condition=Ready \
+        //             pod \
+        //             -l app=securebank \
+        //             -n ${K8S_NAMESPACE} \
+        //             --timeout=5m
 
-                    echo "=========================================="
-                    echo "       KUBERNETES PODS"
-                    echo "=========================================="
+        //             echo "=========================================="
+        //             echo "       KUBERNETES PODS"
+        //             echo "=========================================="
 
-                    sudo -u ansible -H kubectl get pods \
-                    -n ${K8S_NAMESPACE} \
-                    -l app=securebank \
-                    -o wide
+        //             sudo -u ansible -H kubectl get pods \
+        //             -n ${K8S_NAMESPACE} \
+        //             -l app=securebank \
+        //             -o wide
 
-                    echo "=========================================="
-                    echo "       KUBERNETES SERVICE"
-                    echo "=========================================="
+        //             echo "=========================================="
+        //             echo "       KUBERNETES SERVICE"
+        //             echo "=========================================="
 
-                    sudo -u ansible -H kubectl get svc \
-                    ${K8S_SERVICE} \
-                    -n ${K8S_NAMESPACE}
-                '''
-            }
-        }
+        //             sudo -u ansible -H kubectl get svc \
+        //             ${K8S_SERVICE} \
+        //             -n ${K8S_NAMESPACE}
+        //         '''
+        //     }
+        // }
      }
 
 
