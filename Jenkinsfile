@@ -32,7 +32,7 @@ pipeline {
         // KUBERNETES
         // ========================================================
 
-        K8S_NAMESPACE = 'devops-demo'
+        K8S_NAMESPACE = 'securebank'
         K8S_DEPLOYMENT = 'securebank'
     }
 
