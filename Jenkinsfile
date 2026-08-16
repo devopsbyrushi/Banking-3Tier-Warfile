@@ -236,18 +236,18 @@ pipeline {
 
                     echo "Updating Kubernetes image tag..."
 
-                    sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yml
+                    sed -i "s|IMAGE_TAG|${BUILD_NUMBER}|g" k8s/deployment.yaml
 
                     echo "Applying Deployment..."
 
                     kubectl apply \
-                    -f k8s/deployment.yml \
+                    -f k8s/deployment.yaml \
                     -n ${K8S_NAMESPACE}
 
                     echo "Applying Service..."
 
                     kubectl apply \
-                    -f k8s/service.yml \
+                    -f k8s/service.yaml \
                     -n ${K8S_NAMESPACE}
                 '''
             }
@@ -322,7 +322,7 @@ Docker Image:
 devopsbyrushi/securebank:${BUILD_NUMBER}
 
 Kubernetes:
-Namespace  : devops-demo
+Namespace  : securebank
 Deployment : securebank
 
 ==================================================
