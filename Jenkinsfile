@@ -291,7 +291,7 @@ pipeline {
                     echo "=========================================="
 
                     sudo -u ansible -H kubectl get svc \
-                    ${K8S_DEPLOYMENT} \
+                    ${K8S_SERVICE} \
                     -n ${K8S_NAMESPACE}
                 '''
             }
