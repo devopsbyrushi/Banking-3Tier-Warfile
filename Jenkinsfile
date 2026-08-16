@@ -34,6 +34,7 @@ pipeline {
 
         K8S_NAMESPACE = 'securebank'
         K8S_DEPLOYMENT = 'securebank'
+        K8S_SERVICE = 'securebank-service'
     }
 
 
